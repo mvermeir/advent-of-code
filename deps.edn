@@ -1,0 +1,4 @@
+{
+ :deps  {}
+ :paths ["src" "out" "resources"]
+ :aliases {:test {:extra-paths ["test"]}}}
