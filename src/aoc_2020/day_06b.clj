@@ -1,5 +1,6 @@
-(ns aoc-2020.day-06a
-  (:require [clojure.java.io :as io]))
+(ns aoc-2020.day-06b
+  (:require [clojure.java.io :as io]
+            [clojure.set :as set]))
 
 (def input (->> "input-day-06a.txt"
                 io/resource
@@ -7,21 +8,21 @@
                 line-seq))
 
 (def example-input (list
-                      "abc"
-                      ""
-                      "a"
-                      "b"
-                      "c"
-                      ""
-                      "ab"
-                      "ac"
-                      ""
-                      "a"
-                      "a"
-                      "a"
-                      "a"
-                      ""
-                      "b"))
+                     "abc"
+                     ""
+                     "a"
+                     "b"
+                     "c"
+                     ""
+                     "ab"
+                     "ac"
+                     ""
+                     "a"
+                     "a"
+                     "a"
+                     "a"
+                     ""
+                     "b"))
 
 (defn end-off-group? [line] (re-matches #"\s*" line))
 
@@ -30,7 +31,7 @@
     (if (seq current)
       [(conj groups current) []]
       [groups []])
-    [groups (conj current x)]))
+    [groups (conj current (into #{} x))]))
 
 (defn parse-group-answers [xs]
   (let [[groups group-in-progress] (reduce group-individuals-answers [[] []] xs)]
@@ -39,9 +40,7 @@
       groups)))
 
 (defn count-group-answers [group]
-  (->> (mapcat seq group)
-       (into #{})
-       count))
+  (count (apply set/intersection group)))
 
 (defn solve [input]
   (->> (parse-group-answers input)
@@ -49,7 +48,7 @@
        (reduce + 0)))
 
 ;; TESTS
-(defn test-solution [] (= (solve example-input) 11))
+(defn test-solution [] (= (solve example-input) 6))
 
 (defn -main
   "Main function"
