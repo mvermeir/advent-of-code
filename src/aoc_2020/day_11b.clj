@@ -1,4 +1,4 @@
-(ns aoc-2020.day-11a
+(ns aoc-2020.day-11b
   (:require [clojure.java.io :as io]))
 
 (def input (->> "input-day-11a.txt"
@@ -29,29 +29,39 @@
        (mapcat identity)
        (into (hash-map))))
 
-(defn surrounding-spot-coordinates [[x y]]
-  (list [(dec x) (dec y)] [(dec x) y] [(dec x) (inc y)]
-    [x (dec y)],,,,,,,,,,, [x (inc y)]
-    [(inc x) (dec y)] [(inc x) y] [(inc x) (inc y)]))
+(defn line-of-sight [[x0 y0] [x1 y1 :as direction]]
+  (let [next [(+ x0 x1) (+ y0 y1)]]
+    (lazy-seq (cons next (line-of-sight next direction)))))
+
+(def direction-unit-vectors '([-1 1] [0 1] [1 1] [1 0] [1 -1] [0 -1] [-1 -1] [-1 0]))
 
 (defn occupied? [type] (= type :OCCUPIED))
+(defn nothing? [type] (= type :NONE))
 
-(defn no-adjacent-are-occupied? [coord layout]
-  (->> (surrounding-spot-coordinates coord)
-       (map #(get layout %))
+(defn look [los layout]
+  (when-let [next-in-line-of-sight (layout (first los))]
+    (if (nothing? next-in-line-of-sight)
+      (recur (rest los) layout)
+      next-in-line-of-sight)))
+
+(defn no-occupied-in-sight? [coord layout]
+  (->> direction-unit-vectors
+       (map #(line-of-sight coord %))
+       (map #(look % layout))
        (not-any? occupied?)))
 
-(defn enough-adjacent-are-occupied? [coord layout]
-  (->> (surrounding-spot-coordinates coord)
-       (map #(get layout %))
+(defn enough-occupied-in-sight? [coord layout]
+  (->> direction-unit-vectors
+       (map #(line-of-sight coord %))
+       (map #(look % layout))
        (filter occupied?)
        count
-       (< 3)))
+       (< 4)))
 
 (defn apply-rules [[coord type] layout]
   (case type
-    :FREE     (if (no-adjacent-are-occupied? coord layout)     :OCCUPIED :FREE)
-    :OCCUPIED (if (enough-adjacent-are-occupied? coord layout) :FREE :OCCUPIED)
+    :FREE     (if (no-occupied-in-sight? coord layout)     :OCCUPIED :FREE)
+    :OCCUPIED (if (enough-occupied-in-sight? coord layout) :FREE :OCCUPIED)
     type)
   )
 
@@ -80,7 +90,7 @@
        count))
 
 ;; TESTS
-(defn test-solution [] (= (solve example-input) 37))
+(defn test-solution [] (= (solve example-input) 26))
 
 (defn -main
   "Main function"
