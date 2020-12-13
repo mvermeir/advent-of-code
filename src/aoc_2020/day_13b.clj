@@ -20,26 +20,37 @@
        (map (fn [[offset id-str]]
               [offset (Integer/parseInt id-str)]))))
 
-;; (mod (+ t offset) id)
-(defn nearest-departure-after [departure bus-loop-time]
-  (let [earliest (->> (iterate #(+ bus-loop-time %) 0)
-                      (drop-while #(< % departure))
-                      first)]
-    (vector earliest bus-loop-time)))
+(defn solve-for-time-and-sort [pairs]
+  (->> (map (fn [[offset-from-t id]]
+              (let [remainder-of-div-t-by-id (mod (- id offset-from-t) id)]
+                [remainder-of-div-t-by-id id]))
+         pairs)
+       (sort (fn [[_ modulo-1] [_ modulo-2]]
+               (compare modulo-2 modulo-1)))))
 
-(defn generate-departures-for [[_ bus-id]]
-  (iterate #(+ bus-id %) 0))
+;; This function progressively "sieves" more and more candidates by adding in more of the modulo conditions
+;; until one candidate is found for which all the remainders are as expected
+(defn sieve
+  ([pairs]
+   (let [[remainder id] (first pairs)]
+     (sieve remainder id 0 (rest pairs))))
 
-(defn timings-match-up? [offset-and-ids]
-  (fn [time]
-    (println "checking " time)
-    (every? (fn [[offset id]] (= 0 (mod (+ time offset) id))) offset-and-ids)))
+  ([time-so-far modulo m pairs]
+   (if (seq pairs)
+     (let [new-candidate (+ time-so-far (* m modulo))
+           [expected-remainder current-id] (first pairs)]
+       (if (= (mod new-candidate current-id) expected-remainder)
+         ;; sieve on the next pair so it can be integrated
+         (recur new-candidate (* modulo current-id) 0 (rest pairs))
+         ;; current modulo condition not yet met -> try again
+         (recur time-so-far modulo (inc m) pairs)))
+     ;; all modulo conditions are met
+     time-so-far)))
 
 (defn solve [[_ bus-ids-str]]
-  (let [[pair-for-first-bus & pairs-for-other-busses] (parse-offset-and-id bus-ids-str)]
-    (->> (generate-departures-for pair-for-first-bus)
-         (filter (timings-match-up? pairs-for-other-busses))
-         first)))
+  (->> (parse-offset-and-id bus-ids-str)
+       solve-for-time-and-sort
+       sieve))
 
 ;; TESTS
 (defn test-solution [] (= (solve example-input) 1068781))
