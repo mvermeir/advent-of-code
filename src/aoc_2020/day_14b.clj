@@ -13,23 +13,26 @@
                      "mask = 00000000000000000000000000000000X0XX"
                      "mem[26] = 1"))
 
-(defn generate-all-masks [mask-str]
+(defn or-mask-from [mask-str]
+  (-> (s/replace mask-str #"X" "0")
+    (Long/parseLong ,,, 2)))
+
+(defn find-floater-indexes [mask-str]
   (let [max-bit-index (dec (count mask-str))
         bit-indexed-chars (map-indexed (fn [index x] [(- max-bit-index index) x]) mask-str)]
     (reduce
-     (fn [masks-so-far [bit-index x]]
-       (condp = x
-         \1 (map #(bit-set % bit-index) masks-so-far)
-         \X (concat masks-so-far (map #(bit-set % bit-index) masks-so-far))
-         masks-so-far))
-     [0]
+     (fn [float-indexes [bit-index x]]
+       (if (= x \X)
+         (conj float-indexes bit-index)
+         float-indexes))
+     []
      bit-indexed-chars)))
 (defn parse-mask [mask-str]
-  [:MASK (generate-all-masks mask-str)])
+  [:MASK (or-mask-from mask-str) (find-floater-indexes mask-str)])
 
 (defn parse-mem [command]
   (let [[_ address value] (re-matches #"mem\[(\d+)\] = (\d+)" command)]
-    [:MEM address (Long/parseLong value)]))
+    [:MEM (Long/parseLong address) (Long/parseLong value)]))
 
 (defn parse-command [line]
   (let [[v value] (s/split line #" = ")]
@@ -37,9 +40,19 @@
       (parse-mask value)
       (parse-mem line))))
 
-(defn apply-mask [[_ masks] target]
-  (println masks)
-  (map #(bit-or target %) masks))
+(defn apply-mask [[_ base-mask floater-indexes] target]
+  (let [base-address (bit-or base-mask target)]
+    (reduce
+      (fn [addresses-so-far floater-index]
+        (concat
+          (map #(bit-set % floater-index) addresses-so-far)
+          (map #(bit-clear % floater-index) addresses-so-far)))
+      [base-address]
+      floater-indexes)))
+
+(defn update-memory [memory addresses value]
+  (->> (map #(vector % value) addresses)
+       (into memory)))
 
 (defn execute-command [[mask memory] [type _ _ :as cmd]]
   (condp = type
@@ -48,8 +61,8 @@
 
     :MEM
     (let [[_ address value] cmd
-          new-value (apply-mask mask value)]
-      [mask (assoc memory address new-value)])))
+          addresses-to-update (apply-mask mask address)]
+      [mask (update-memory memory addresses-to-update value)])))
 
 (defn solve [input]
   (->> input
