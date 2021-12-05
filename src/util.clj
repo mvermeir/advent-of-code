@@ -9,3 +9,6 @@
        io/resource
        io/reader
        line-seq))
+
+(defn split-using [predicate col]
+  (filter (fn [xs] (not (predicate (first xs)))) (partition-by predicate col)))
