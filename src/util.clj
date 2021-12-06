@@ -12,3 +12,12 @@
 
 (defn split-using [predicate col]
   (filter (fn [xs] (not (predicate (first xs)))) (partition-by predicate col)))
+
+(defn abs [^long x]
+  (Math/abs x))
+
+(defn normalize [xs]
+  (->> (map (fn [x]
+              (if (= x 0) 0 (/ x (abs x))))
+         xs)
+       (into [])))
