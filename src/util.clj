@@ -10,6 +10,12 @@
        io/reader
        line-seq))
 
+(defn file->str [file-name]
+  (->> file-name
+       io/resource
+       io/reader
+       slurp))
+
 (defn split-using [predicate col]
   (filter (fn [xs] (not (predicate (first xs)))) (partition-by predicate col)))
 
