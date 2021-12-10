@@ -14,10 +14,10 @@
                      "<{([([[(<>()){}]>(<<{{"
                      "<{([{{}}[<[[[<>{}]]]>[]]"))
 
-(def completion-score {\) 1
-                       \] 2
-                       \} 3
-                       \> 4})
+(def error-score-by-char {\) 3
+                          \] 57
+                          \} 1197
+                          \> 25137})
 (def chunk-start->end {\( \)
                        \[ \]
                        \{ \}
@@ -30,52 +30,46 @@
 (defn matches-current-chunk? [stack char]
   (boolean (= (first stack) (chunk-end->start char))))
 
-(defn complete [stack]
-  (map chunk-start->end stack))
-
-(defn scan-chunks-and-determine-correct-closing [line]
-  (let [[x & _ :as stack] (reduce (fn [stack x]
+(defn scan-chunks-and-score-errors [line]
+  (let [[x & rest] (reduce (fn [stack x]
                                  (cond
                                    (opens-chunk? x) (conj stack x)
                                    (and (closes-chunk? x) (matches-current-chunk? stack x)) (rest stack)
                                    :else (reduced (conj stack x)))) ;; done put error char on stack
                          '()
                          line)]
-    (if (and x (opens-chunk? x))
-      (complete stack)
-      '())))
-
-(defn score [closing]
-  (reduce (fn [tot x] (+ (* tot 5) (completion-score x)))
-    0
-    closing))
+    (error-score-by-char x)))
 
 (comment "repls tests"
   (def line (first example-input))
 
-  (apply str (map chunk-start->end (reverse "[({([[{{")))
+  (opens-chunk? \[)
+  (matches-current-chunk? (list \( \[) \))
 
-  (score (list \] \) \} \>))
+  (reduce (fn [stack x]
+            (println (str "stack" stack " char " x " closes " (closes-chunk? x) " matches " (matches-current-chunk? stack x)))
+            (cond
+              (opens-chunk? x) (conj stack x)
+              (and (closes-chunk? x) (matches-current-chunk? stack x)) (rest stack)
+              :else (reduced (conj stack x))))              ;; done put error char on stack
+    '()
+    "{([(<{}[<>[]}>{[]{[(<()>")
+
+  (scan-chunks-and-score-errors "{([(<{}[<>[]}>{[]{[(<()>")
+  (scan-chunks-and-score-errors "[[<[([]))<([[{}[[()]]]")
+  (scan-chunks-and-score-errors "[{[{({}]{}}([{[{{{}}([]")
 
   (->> example-input
-       (map scan-chunks-and-determine-correct-closing)
-       (filter seq)
-       (map score)
-       sort
-       (into []))
-
-
+       (map scan-chunks-and-score-errors)
+       (filter identity)
+       (reduce +))
   ,)
 
 
 (defn -main
   "Main function"
   []
-  (println (let [sorted-scores (->> (util/file->seq "2021/d10.txt")
-                                    (map scan-chunks-and-determine-correct-closing)
-                                    (filter seq)
-                                    (map score)
-                                    sort
-                                    (into []))
-                 middle-element-idx (quot (count sorted-scores) 2)]
-             (get sorted-scores middle-element-idx))))
+  (println (->> (util/file->seq "2021/d10.txt")
+                (map scan-chunks-and-score-errors)
+                (filter identity)
+                (reduce +))))
