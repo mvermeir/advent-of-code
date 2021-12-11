@@ -27,3 +27,12 @@
               (if (= x 0) 0 (/ x (abs x))))
          xs)
        (into [])))
+
+(defn parse-grid-map [value-fn grid-lines]
+  (->> (map-indexed
+         (fn [row-idx row]
+           (map-indexed
+             (fn [col-idx x] [[row-idx col-idx] (value-fn x)]) row))
+         grid-lines)
+       (apply concat)
+       (into {})))
