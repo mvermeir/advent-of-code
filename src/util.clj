@@ -36,3 +36,6 @@
          grid-lines)
        (apply concat)
        (into {})))
+
+(defn upper-case? [^String string]
+  (every? (fn [char] (Character/isUpperCase ^char char)) string))
