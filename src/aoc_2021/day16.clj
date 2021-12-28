@@ -43,13 +43,6 @@
     [:length-in-bits (bits->number (take 15 bits)) (drop 15 bits) (inc 15)]
     [:nb-sub-packets (bits->number (take 11 bits)) (drop 11 bits) (inc 11)]))
 
-;;(defn read-packet [bits]
-;;  (let [{type :type rest :next-bits} (read-header bits)]
-;;    (if (= type 4)
-;;      (read-literal rest)
-;;      (let [{length :length subs :nb-sub-packets} (read-operator rest)]
-;;        ))))
-
 (declare continuation-on-length-fn)
 (declare continuation-on-subcount-fn)
 (defn read-packet [bits k]
@@ -138,40 +131,13 @@
        version-sum)
   (->> (read-packets (mapcat hex->bits "A0016C880162017C3686B18A3D4780"))
        version-sum)
-
-
-
-  {:version  4,
-   :type     2,
-   :length   29,
-   :operands [{:version  1,
-               :type     2,
-               :length   23,
-               :operands [{:version 5, :type 2, :length 17, :operands [{:version 6, :type 4, :length 11, :value 15}]}]}]}
-
-
-
-  (reduce
-    )
-
-
-  (def first-operator-reached (->> (read-header bits-subcount-op-with-literals)
-                                   second
-                                   read-operator))
-
-  (def first-sub-packet (read-packet (peek first-operator-reached) identity))
-
-  (let [[content-type nb next-bits] (read-operator first-operator-reached)
-        k identity
-        header {}]
-    (if (= content-type :length-in-bits)
-      (read-packet next-bits (continuation-on-length-fn header k '() nb))))
-
-  (read-packets bits-operator-containing-literals)
   ,)
 
 
 (defn -main
   "Main function"
   []
-  (println "todo"))
+  (println (->> (util/file->str "2021/d16.txt")
+                (mapcat hex->bits)
+                read-packets
+                version-sum)))
