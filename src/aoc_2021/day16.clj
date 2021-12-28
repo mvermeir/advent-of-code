@@ -40,8 +40,8 @@
 
 (defn read-operator [[mode & bits]]
   (if (= mode 0)
-    [:length-in-bits (bits->number (take 15 bits)) (drop 15 bits)]
-    [:nb-sub-packets (bits->number (take 11 bits)) (drop 11 bits)]))
+    [:length-in-bits (bits->number (take 15 bits)) (drop 15 bits) (inc 15)]
+    [:nb-sub-packets (bits->number (take 11 bits)) (drop 11 bits) (inc 11)]))
 
 ;;(defn read-packet [bits]
 ;;  (let [{type :type rest :next-bits} (read-header bits)]
@@ -58,45 +58,41 @@
         {type :type}       header]
     (if (= type 4)
       (let [[value length bits-after-literal] (read-literal next-bits)]
-        (println (str "literal " [header next-bits] " value " value " length " (+ length 6)))
         (k [(assoc header
               :length (+ length 6)
               :value value)
             bits-after-literal]))
-      (let [[content-type nb next-bits] (read-operator next-bits)]
-        (println (str "operator " [header next-bits nb]))
+      (let [[content-type nb next-bits op-bit-length] (read-operator next-bits)]
         (if (= content-type :length-in-bits)
-          (read-packet next-bits (continuation-on-length-fn header k [] nb))
-          (read-packet next-bits (continuation-on-subcount-fn header k [] nb))))
+          (read-packet next-bits (continuation-on-length-fn header k [] nb op-bit-length))
+          (read-packet next-bits (continuation-on-subcount-fn header k [] nb op-bit-length))))
       )))
 
 (defn read-packets [bits]
   (let [[root-packet left-over-bits] (read-packet bits identity)]
     root-packet))
 
-(defn overhead-bit-length [packet-type])
-
-(defn continuation-on-length-fn [header k sub-packets nb-bits-still-needed]
+(defn continuation-on-length-fn [header k sub-packets nb-bits-still-needed op-bit-length]
   (fn [[sub-packet next-bits]]
     (let [new-subpackets (conj sub-packets sub-packet)
           nb-bits-needed-after-this (- nb-bits-still-needed (sub-packet :length))]
       (if (= nb-bits-needed-after-this 0)
         (k [(assoc header
-              :length (reduce + 6 (map :length new-subpackets))
+              :length (reduce + (+ 6 op-bit-length) (map :length new-subpackets))
               :operands new-subpackets)
             next-bits])
-        (read-packet next-bits (continuation-on-length-fn header k new-subpackets nb-bits-needed-after-this))))))
+        (read-packet next-bits (continuation-on-length-fn header k new-subpackets nb-bits-needed-after-this op-bit-length))))))
 
-(defn continuation-on-subcount-fn [header k sub-packets nb-packets-still-needed]
+(defn continuation-on-subcount-fn [header k sub-packets nb-packets-still-needed op-bit-length]
   (fn [[sub-packet next-bits]]
     (let [new-subpackets (conj sub-packets sub-packet)
           nb-packets-needed-after-this (dec nb-packets-still-needed)]
       (if (= nb-packets-needed-after-this 0)
         (k [(assoc header
-              :length (reduce + 6 (map :length new-subpackets))
+              :length (reduce + (+ 6 op-bit-length) (map :length new-subpackets))
               :operands new-subpackets)
             next-bits])
-        (read-packet next-bits (continuation-on-subcount-fn header k new-subpackets nb-packets-needed-after-this))))))
+        (read-packet next-bits (continuation-on-subcount-fn header k new-subpackets nb-packets-needed-after-this op-bit-length))))))
 
 (defn version-sum [root-packet]
   (->> (tree-seq (fn [x] (seq (x :operands))) :operands root-packet)
