@@ -37,8 +37,28 @@
 
   ,,,)
 
+;; PART 2
+(defn split-into-groups [input]
+  (partition 3 input))
+
+(defn find-shared-item-type [group-rucksacks]
+  (first (apply s/intersection (map set group-rucksacks))))
+
+(defn sum-of-priorities-of-group-badges [input]
+  (->> (split-into-groups input)
+       (map find-shared-item-type)
+       (map priorities)
+       (reduce + 0)))
+
+(comment
+  (= \r (find-shared-item-type (take 3 example-input)))
+  (sum-of-priorities-of-group-badges example-input)
+  (= 70 (sum-of-priorities-of-group-badges example-input))
+
+  ,,,)
+
 (defn -main
   "Main function"
   []
   (let [input (util/file->seq "2022/d03.txt")]
-    (sum-of-priorities-of-badly-packed-item-types input)))
+    ((juxt sum-of-priorities-of-badly-packed-item-types sum-of-priorities-of-group-badges) input)))
