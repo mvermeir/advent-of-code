@@ -1,3 +1,3 @@
 (ns user
   (:require [util :as util]
-            [aoc-2022.day02b :refer :all]))
+            [aoc-2022.day03 :refer :all]))
