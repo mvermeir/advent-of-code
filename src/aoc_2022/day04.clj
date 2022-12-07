@@ -29,6 +29,14 @@
        (filter any-subsumes-the-other)
        count))
 
+(defn any-overlap-with-other [[sections-one sections-two]]
+  (not= (s/intersection sections-one sections-two) #{}))
+
+(defn count-any-overlap-pairs [input]
+  (->> (map line->data input)
+       (filter any-overlap-with-other)
+       count))
+
 (comment
   (re-matches #"(.+)-(.+),(.+)-(.+)" (first example-input))
   (line->data (first example-input))
@@ -36,6 +44,7 @@
   (set (take-while (fn [x] (<= x 5)) (iterate inc 5)))
   ;; verify example input
   (= 2 (count-full-overlap-pairs example-input))
+  (= 4 (count-any-overlap-pairs example-input))
 
   ,,,)
 
@@ -43,4 +52,4 @@
   "Main function"
   []
   (let [input (util/file->seq "2022/d04.txt")]
-    (count-full-overlap-pairs input)))
+    ((juxt count-full-overlap-pairs count-any-overlap-pairs) input)))
