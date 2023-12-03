@@ -4,6 +4,9 @@
 (defn to-int [str]
   (Integer/parseInt (re-find #"\A-?\d+" str)))
 
+(defn str->long [str]
+  (Long/parseLong (re-find #"\A-?\d+" str)))
+
 (defn file->seq [file-name]
   (->> file-name
        io/resource

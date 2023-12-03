@@ -1,5 +1,9 @@
-{
- :deps  {org.clojure/data.priority-map {:mvn/version "1.1.0"}}
+{:deps  {org.clojure/data.priority-map {:mvn/version "1.1.0"}}
  :paths ["src" "out" "resources"]
  :aliases {:test {:extra-paths ["test"]}
-           :dev  {:extra-paths ["dev"]}}}
+           :dev  {:extra-paths ["dev"]}
+           :repl {:extra-deps {nrepl/nrepl       {:mvn/version "1.1.0"}
+                               cider/cider-nrepl {:mvn/version "0.44.0"}}
+                  :main-opts  ["-m" "nrepl.cmdline"
+                               "--middleware" "[cider.nrepl/cider-middleware]"
+                               "--interactive"]}}}
