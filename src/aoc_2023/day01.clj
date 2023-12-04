@@ -36,8 +36,7 @@
 (defn read-calibration-file [file-name]
   (->> file-name
        util/file->seq
-       (map parse-calibration)
-       (reduce +)))
+       read-calibrations))
 
 (comment
   (util/str->long "287976287976")
