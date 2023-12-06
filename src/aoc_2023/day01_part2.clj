@@ -63,17 +63,7 @@
 
 (comment
   (read-calibration-file "2023/day1-part1.txt")
-  ;; one two three four five six seven eight nine ten
-  ;; reduce over the entire thing, keep the last 5 chars, when you encounter a digit track it,
-  ;; when you see the last letter of written digit, check for it
-  ;; anything found goes in a vector, then take first and last done
-  (java.lang.String/subs )
-  (s/ends-with? "ghtwo" "two")
   (scan-calibration-line "eightwothree")
-  (reduce (fn [col c]
-            )
-          [""]
-          )
   ,,,)
 
 (defn -main
