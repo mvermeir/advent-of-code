@@ -5,8 +5,8 @@
   (Integer/parseInt (re-find #"\A-?\d+" str)))
 
 (defn char->int [ch]
-  (if (java.lang.Character/isDigit ch)
-    (Integer/parseInt ch)
+  (if (and (char? ch) (java.lang.Character/isDigit ch))
+    (java.lang.Character/getNumericValue ch)
     nil))
 
 (defn str->long [str]
@@ -44,6 +44,12 @@
          grid-lines)
        (apply concat)
        (into {})))
+
+(defn generate-surrounding-coordinates [[row col :as center]]
+  (for [x [(dec row) row (inc row)]
+        y [(dec col) col (inc col)]
+        :when (not= center [x y])]
+    [x y]))
 
 (defn upper-case? [^String string]
   (every? (fn [char] (Character/isUpperCase ^char char)) string))

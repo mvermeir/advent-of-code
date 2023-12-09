@@ -1,5 +1,6 @@
 (ns aoc-2023.day03-part1
-  (:require [util :as util]))
+  (:require [util :as util]
+            [clojure.set :as set]))
 
 (def example-input (list 
                      "467..114.."
@@ -45,7 +46,7 @@
   [x (dec y)])
 
 
-(defn aggregate-into-numbers [sorted-row]
+(defn aggregate-numbers-on-same-row [sorted-row]
   (reduce (fn [[[coord-set nb] & rest :as col] [coord [_ digit]]]
             (if (and (seq col) (coord-set (preceding coord)))
               (conj rest [(conj coord-set coord) (+ (* nb 10) digit)])
@@ -54,7 +55,7 @@
           sorted-row))
 
 (comment
-  (aggregate-into-numbers '([[0 0] [:digit 4]]
+  (aggregate-numbers-on-same-row '([[0 0] [:digit 4]]
   [[0 1] [:digit 6]]
   [[0 2] [:digit 7]]
   [[0 5] [:digit 1]]
@@ -68,7 +69,7 @@
                          (group-by (fn [[[x _]]] x))
                          vals)]
     (->> sorted-rows
-         (map aggregate-into-numbers))))
+         (mapcat aggregate-numbers-on-same-row))))
 (comment
   (aggregate-numbers (parse-grid example-input))
   (aggregate-numbers [[[0 0] [:digit 4]]
@@ -80,24 +81,19 @@
 )
   (sort (list [1 1] [0 2] [0 1] [1 0])))
 
-(defn sum-part-numers [grid-lines]
+(defn sum-part-numbers [grid-lines]
   (let [grid (parse-grid grid-lines)
         touched-coord-set (coord-touched-by-symbol-set grid)
-        nb-by-coordinates (aggregate-numbers grid)]
-    ;; group all numbers, then just check if there is overlap with the touched set
-    ;; reduct +
-    touched-coord-set))
+        nb-by-coordinates (aggregate-numbers grid)
+        touched-numbers (->> nb-by-coordinates
+                             (filter (fn [[coords _]] (seq (set/intersection coords touched-coord-set))))
+                             (map (fn [[_ number]] number)))]
+    (println touched-coord-set)
+    (reduce + touched-numbers)))
 
 (comment
-  (parse-grid example-input)
-  (count (filter (fn [[_ [typ _]]] (= typ :symbol))  (parse-grid example-input)))
+  (sum-part-numbers example-input)
+  (->> (util/file->seq  "2023/day3.txt")
+       sum-part-numbers)
 
-  (->> (parse-grid example-input)
-       (filter (fn [[[x _] _]] (= x 1))))
-
-  (group-by (fn [[[x _] _]] (= x 1)) (parse-grid example-input))
-
-  (coord-touched-by-symbol-set (parse-grid example-input))
-
-  ;; digits only, and group those
   ,,,)
