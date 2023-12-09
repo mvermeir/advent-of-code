@@ -4,6 +4,11 @@
 (defn to-int [str]
   (Integer/parseInt (re-find #"\A-?\d+" str)))
 
+(defn char->int [ch]
+  (if (java.lang.Character/isDigit ch)
+    (Integer/parseInt ch)
+    nil))
+
 (defn str->long [str]
   (Long/parseLong (re-find #"\A-?\d+" str)))
 
