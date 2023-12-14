@@ -27,8 +27,20 @@
 (defn split-using [predicate col]
   (filter (fn [xs] (not (predicate (first xs)))) (partition-by predicate col)))
 
+(defn extract-numbers [string]
+ (map (fn [[_ nb]] nb) (re-seq #"(\d+)" string)))
+
 (defn abs [^long x]
   (Math/abs x))
+
+(defn solve-kwadratic [a b c]
+  (let [discriminant (- (* b b) (* 4 a c))]
+    (if (< discriminant 0)
+      #{}
+      (let [sqrtD (Math/sqrt discriminant)
+            x1 (/ (+ (- b) sqrtD) (* 2 a))
+            x2 (/ (- (- b) sqrtD) (* 2 a))]
+        (into #{} [x1 x2])))))
 
 (defn normalize [xs]
   (->> (map (fn [x]
@@ -53,3 +65,12 @@
 
 (defn upper-case? [^String string]
   (every? (fn [char] (Character/isUpperCase ^char char)) string))
+
+
+;; For easy reference
+;;(def debug (atom []))
+;;
+;;(defn add-to-debug [x]
+;;  (swap! debug conj x))
+;;
+;;(add-tap add-to-debug)
