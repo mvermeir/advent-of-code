@@ -1,11 +1,6 @@
 (ns aoc-2023.day05-part1
   (:require [util :as util]))
 
-;; identify maps, the maps are in order to output of one always leeds to the next
-;; inside map, expand each line to full until a new map is encountered
-
-;; reduce over set of maps or just comp them?
-
 (def example-input (list
                      "seeds: 79 14 55 13"
 

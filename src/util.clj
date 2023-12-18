@@ -66,6 +66,17 @@
 (defn upper-case? [^String string]
   (every? (fn [char] (Character/isUpperCase ^char char)) string))
 
+(defn compare-in-order
+  "Composes a comparator out of the provided comparators" 
+  [& comparators]
+  (fn [x y]
+    (reduce (fn [col comp-fn]
+              (let [comparison (comp-fn x y)]
+                (if (not= comparison 0)
+                  (reduced comparison)
+                  comparison)))
+            0
+            comparators)))
 
 ;; For easy reference
 ;;(def debug (atom []))
